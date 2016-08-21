@@ -6,13 +6,11 @@ error_reporting(E_ALL);
 
 if (isset($_POST['serial'])) {
 	$api = new TsdrApi();
-	$name = $_POST["name"];
-	$email = $_POST["email"];
+	// $name = $_POST["name"];
+	// $email = $_POST["email"];
 	$serial = $_POST["serial"];
 	$data = $api->getTrademarkData($serial);
-	echo '<pre>';
-	print_r($data);
-	echo '</pre>';
+	echo $api->responseForm($data, $serial);
 	die();
 }
 
@@ -64,10 +62,10 @@ class TsdrApi
 		return <<<APIFORM
 <h1>Trademark API test environment</h1>
 <form method="post" action="$phpself">  
-  Name: <input type="text" name="name">
+ <!-- Name: <input type="text" name="name">
   <br><br>
   E-mail: <input type="text" name="email">
-  <br><br>
+  <br><br> -->
   Serial Number: <input type="text" name="serial">
   <br><br>
   <input type="button" name="submit" value="Submit" onclick="javascript:submitSerial()">
@@ -104,6 +102,51 @@ function submitSerial()
 APIFORM;
 	}
 
+	/**
+	 * Return response form
+	 *
+	 * @param Object $data
+	 * @param Int $serial
+	 * @return HTML form
+	 */
+	public function responseForm($data, $serial)
+	{
+		$respForm = <<<RESPONSEFORM
+		<div class="response-form" id="$serial">
+	<dl class="trademark-info">
+		<dt>Application Filing Date</dt>
+			<dd>{$data['ApplicationFilingDate']}</dd>
+		<dt>Mark Type</dt>
+			<dd>{$data['MarkType']}</dd>
+		<dt>Status</dt>
+			<dd>{$data['Status']}</dd>
+		<dt>Renewal Date</dt>
+			<dd>{$data['RenewalDate']}</dd>
+		<dt>Trademark Literal Elements</dt>
+			<dd>{$data['MarkLiteralElements']}</dd>
+		<dt>Standard Character Claim</dt>
+			<dd>{$data['StandardCharacterClaim']}</dd>
+RESPONSEFORM;
+	
+	for($i = 0; $i < count($data['ClassNumber']); $i++)	
+	{
+		$respForm .= <<<RESPONSEFORM
+		<dt>Classification Number and Description</dt>
+			<dd>{$data['ClassNumber'][$i]}: &nbsp {$data['ClassDescription'][$i]}</dd>
+		<!-- <dt>Classification Description</dt> -->
+			<dd></dd>
+RESPONSEFORM;
+	}
+$respForm .= <<<RESPONSEFORM
+	</dl>
+</div>
+RESPONSEFORM;
+
+		return $respForm;
+
+	}
+	
+	
 	/**
 	* Sets a dirctory path for users 
 	* to save xml data
@@ -214,19 +257,27 @@ APIFORM;
 	{
 		$counter = 0;
 		$data = array();
-		$data['ApplicationFilingDate'] 	= $trademark->ApplicationDate;
-		$data['MarkType'] 				= $trademark->MarkCategory;
-		$data['Status']					= $trademark->NationalTrademarkInformation->MarkCurrentStatusExternalDescriptionText;
-		$data['RenewalDate']			= $trademark->NationalTrademarkInformation->RenewalDate;
-		$data['MarkLiteralElements']	= $trademark->MarkRepresentation->MarkReproduction->WordMarkSpecification->MarkVerbalElementText;
-		$data['StandardCharacterClaim']	= $trademark->MarkRepresentation->MarkReproduction->WordMarkSpecification->MarkStandardCharacterIndicator;
+		$data['ApplicationFilingDate'] 	= $trademark->ApplicationDate
+											? $trademark->ApplicationDate: "No Information found.";
+		$data['MarkType'] 				= $trademark->MarkCategory
+											? $trademark->MarkCategory: "No Information found.";
+		$data['Status']					= $trademark->NationalTrademarkInformation->MarkCurrentStatusExternalDescriptionText
+											? $trademark->NationalTrademarkInformation->MarkCurrentStatusExternalDescriptionText: "No Information found.";
+		$data['RenewalDate']			= $trademark->NationalTrademarkInformation->RenewalDate 
+											? $trademark->NationalTrademarkInformation->RenewalDate: "No Information found.";
+		$data['MarkLiteralElements']	= $trademark->MarkRepresentation->MarkReproduction->WordMarkSpecification->MarkVerbalElementText
+											? $trademark->MarkRepresentation->MarkReproduction->WordMarkSpecification->MarkVerbalElementText: "No Information found.";
+		$data['StandardCharacterClaim']	= $trademark->MarkRepresentation->MarkReproduction->WordMarkSpecification->MarkStandardCharacterIndicator
+											? $trademark->MarkRepresentation->MarkReproduction->WordMarkSpecification->MarkStandardCharacterIndicator: "No Information found.";
 		
 		// Accounts for multiple classes and descriptions in a trademark 
 		foreach ($trademark->GoodsServicesBag->GoodsServices as $GoodsServices) 
 		{
 			
-			$data['ClassNumber'][$counter]			= $GoodsServices[$counter]->ClassDescriptionBag->ClassDescription[0]->ClassNumber;
-			$data['ClassDescription'][$counter]		= $GoodsServices[$counter]->ClassDescriptionBag->ClassDescription[0]->GoodsServicesDescriptionText;
+			$data['ClassNumber'][$counter]			= $GoodsServices[$counter]->ClassDescriptionBag->ClassDescription[0]->ClassNumber
+														? $GoodsServices[$counter]->ClassDescriptionBag->ClassDescription[0]->ClassNumber: "No Information found.";
+			$data['ClassDescription'][$counter]		= $GoodsServices[$counter]->ClassDescriptionBag->ClassDescription[0]->GoodsServicesDescriptionText
+														? $GoodsServices[$counter]->ClassDescriptionBag->ClassDescription[0]->GoodsServicesDescriptionText: "No Information found.";
 			$counter++;
 		}
 
