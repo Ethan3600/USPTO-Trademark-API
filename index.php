@@ -61,6 +61,10 @@ class TsdrApi
 		$phpself = htmlspecialchars($_SERVER["PHP_SELF"]);
 		return <<<APIFORM
 <h1>Trademark API test environment</h1>
+<p>Welcome to the Trademark API Test Environment!</p>
+<p>This form will dynamically retrieve relative information about any existing trademark on the fly!</p>
+<p>Please enter a serial number.</p>
+<i>If you don't have have one, use this for an example: 85129597</i>
 <form method="post" action="$phpself">  
  <!-- Name: <input type="text" name="name">
   <br><br>
@@ -68,15 +72,22 @@ class TsdrApi
   <br><br> -->
   Serial Number: <input type="text" name="serial">
   <br><br>
-  <input type="button" name="submit" value="Submit" onclick="javascript:submitSerial()">
+  <input type="button" name="submit" value="Submit" onclick="javascript:submitSerial(event)">
   <div id='loadingmessage' style='display:none'>
   	<img src='reload.gif'/>
   </div>  
 </form>
 
 <div id="trademark"></div>
-
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script type=text/javascript>
+
+$("input").keypress(function(event) {
+   if (event.which == 13) {
+   	event.preventDefault();
+   	submitSerial();    
+   }       
+});
 
 function submitSerial()
 {
@@ -97,8 +108,6 @@ function submitSerial()
   }); 
 }   
 </script>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 APIFORM;
 	}
 
