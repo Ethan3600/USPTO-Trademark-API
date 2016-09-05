@@ -54,7 +54,7 @@ class TsdrApi
 	*
 	* @var Object
 	*/
-	public $_trademark;
+	private $_trademark;
 
 	/**
 	* returns Api Form
