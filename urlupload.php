@@ -1,5 +1,11 @@
 <?php
-// @TODO Clean up errors by adding exceptions so you can check for them in the client code
+/**
+ * Handles file upload from server
+ * 
+ * @param String $fileurl
+ * @param String $url
+ * @param String $unzipdir
+ */
 class urluploader {
 
   private $filename; //file name of the zip file
@@ -13,53 +19,55 @@ class urluploader {
     if (!is_string($dir))
     { 
       //the user has not provided any directory so we will use the current one
-      $this->unzipdir=getcwd() . DIRECTORY_SEPARATOR;
+      $this->unzipdir = getcwd() . DIRECTORY_SEPARATOR;
        
       //this is where our file wiil be uploaded and unzipped
     }
     else 
     {
-      $this->unzipdir=$dir . DIRECTORY_SEPARATOR;
+      $this->unzipdir = $dir . DIRECTORY_SEPARATOR;
     }
                      
-    $this->filename=$this->unzipdir . "serialNum_{$serial}.zip";
-    $this->url=$fileurl;
+    $this->filename = $this->unzipdir . "serialNum_{$serial}.zip";
+    $this->url = $fileurl;
     }
 
   /**
   * Grabs zip file from server
   * 
   * @return Bool TRUE
+  * @throws Exception
   */
   public function uploadFromUrl()
   {
-    //lets validate the url
+    // validate the url
     if(!filter_var($this->url, FILTER_VALIDATE_URL))
     {
-      throw New Exception("The provided url is invalid");
+    	throw new Exception("The provided url is invalid");
     }
   
-      $length=5120; //to save on server load we will have to do this in turns
+    $length=5120;
      
-    try
+
+    if(!($handle = fopen($this->url,'rb')))
     {
-      $handle=fopen($this->url,'rb');
-    }
-    catch (Exception $e)
-    {
-      echo 'ERROR: '.$e->getMessage;
+    	throw new Exception("Url was not able to be opened");
     }
      
-    $write=fopen ( $this->filename,'w');
-     
-    while ( !feof($handle))
+    if(!($write = fopen($this->filename,'w')))
     {
-      $buffer=fread ( $handle,$length );
-      fwrite ( $write,$buffer);
+    	throw new Exception("Could not open zip file");
     }
-    fclose ( $handle);
+     
+    while(!feof($handle))
+    {
+      $buffer = fread($handle,$length);
+      fwrite($write,$buffer);
+    }
+    
+    fclose ($handle);
     fclose ($write);
-    //echo "<br>successfully uploaded the file:" . basename($this->filename) . "<br>" ;
+    $this->_unzip();
     return true;
   }
 
@@ -71,7 +79,7 @@ class urluploader {
   * @param Bool $filename
   * @return Bool TRUE
   */
-  public function unzip($newdir=false,$delete=true,$filename=false)
+  private function _unzip($newdir=false,$delete=true,$filename=false)
   { 
   /*
   * Lets check if the user has provided a filename.
@@ -80,14 +88,14 @@ class urluploader {
         
     if (!$filename)
     {
-      $filename=$this->filename;
+      $filename = $this->filename;
     } 
     
     //Set directory where the file will be unzipped
     if(!$newdir)
     //if the user has not provided a directory name use the one created
     {
-      $newdir=$this->unzipdir;
+      $newdir = $this->unzipdir;
     }
               
     //Check to see if the zip file exists
@@ -98,7 +106,7 @@ class urluploader {
     
     //Lets check if the default zip class exists
            
-     if (class_exists('ZipArchive'))
+    if(class_exists('ZipArchive'))
     {
       $zip = new ZipArchive;
 
@@ -108,31 +116,36 @@ class urluploader {
       }
 
 
-    $zip->extractTo($newdir) or die ('Unable to extract the file');
-
-      //echo "<br>Extracted the zip file<br>";
+    if(!($zip->extractTo($newdir)))
+    {
+    	throw new Exception("Unable to extract zip file");
+    }
+    
     $zip->close();
     }
     else
     {
       // the zip class is missing. try unix shell command
       @shell_exec('unzip -d $newdir '. $this->filename);
-      // echo "<br>Unzipped the file using shell command<br>";
     }
       //If delete has been set to true then we delete the existing zip file  
     if ($delete) 
     {
       unlink($filename);
-      $files = glob($this->unzipdir . "*.{css,html,png,jpg,jpeg}", GLOB_BRACE);
+      $files = glob($this->unzipdir . "*.{css,html}", GLOB_BRACE);
       foreach ($files as $file) 
       {
-          unlink($file);
+      	unlink($file);
+      }
+      
+      // additional search for extra images
+      $tm5thumbnail = glob($this->unzipdir . "{markThumbnailImage,tm5Image}.*", GLOB_BRACE);
+      foreach ($tm5thumbnail as $extraImages)
+      {
+      	unlink($extraImages);
       }
 
     }
       return true;
   }
-
-
-
 } 

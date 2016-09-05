@@ -1,6 +1,6 @@
 <?php 
 require_once './urlupload.php';
-error_reporting(E_ALL);
+//error_reporting(E_ALL);
 
 /*=================== EXECUTION/HANDLER CODE ======================*/
 
@@ -10,7 +10,10 @@ if (isset($_POST['serial'])) {
 	// $email = $_POST["email"];
 	$serial = $_POST["serial"];
 	$data = $api->getTrademarkData($serial);
-	echo $api->responseForm($data, $serial);
+	if($data)
+	{
+		echo $api->responseForm($data, $serial);
+	}
 	die();
 }
 
@@ -26,8 +29,8 @@ echo TsdrApi::getApiForm();
 * This API will allow users to create an AJAX form
 * that takes a serial number of a trademark and 
 * get important information about it
-*
-* @version 0.1 Beta
+* 
+* @version 0.2 Beta
 */
 class TsdrApi
 {
@@ -51,7 +54,7 @@ class TsdrApi
 	*
 	* @var Object
 	*/
-	private $_trademark;
+	public $_trademark;
 
 	/**
 	* returns Api Form
@@ -92,20 +95,31 @@ $("input").keypress(function(event) {
 function submitSerial()
 {
 	$('#loadingmessage').show();
-	$.ajax({
-    type: "POST",
-    data: {
-    	'serial': $('input[name=serial]').val()
-    },
-    url: "$phpself",
-    dataType: "html",
-    success: function(data) {
-    	$('#loadingmessage').hide();
-    	var result = null;
-    	result = data;
-    	$('#trademark').html(result);
-    }
-  }); 
+	if($('input[name=serial]').val() == "")
+	{
+		$( ".response-form" ).remove();
+		$( ".error" ).remove();
+		$('#trademark').append('<div class="error">The field cannot be empty. </br> Please insert a valid serial number</div>');
+		$('#loadingmessage').hide();
+	}
+	else
+	{
+		$( ".error" ).remove();
+		$.ajax({
+	    type: "POST",
+	    data: {
+	    	'serial': $('input[name=serial]').val()
+	    },
+	    url: "$phpself",
+	    dataType: "html",
+	    success: function(data) {
+	    	$('#loadingmessage').hide();
+	    	var result = null;
+	    	result = data;
+	    	$('#trademark').html(result);
+	    }
+	  });
+	} 
 }   
 </script>
 APIFORM;
@@ -123,6 +137,8 @@ APIFORM;
 		$respForm = <<<RESPONSEFORM
 		<div class="response-form" id="$serial">
 	<dl class="trademark-info">
+		<dt>Trademark</dt>
+			<dd><img src="status_archive/$serial.png" style="width: 170px;" alt="trademark image"></dd>
 		<dt>Application Filing Date</dt>
 			<dd>{$data['ApplicationFilingDate']}</dd>
 		<dt>Mark Type</dt>
@@ -154,35 +170,12 @@ RESPONSEFORM;
 		return $respForm;
 
 	}
-	
-	
-	/**
-	* Sets a dirctory path for users 
-	* to save xml data
-	*
-	* @param String $dir
-	* @deprecated If memcache is implemented, this method is pointless
-	*/
-	public function setXmlDirectory($dir)
-	{
-	/** 
-	* @TODO this needs to be saved to a database so users can choose
-	* the name of the directory where they want to save data
-	*
-	* !!THIS IS NOT READY FOR PRODUCTION!!
-	*
-	* By default the api will create a  
-	* directory called 'status_archive'
-	*/
-		$dir = $this->_cleanInput($dir);
-		$this->_dir = $dir;
-	}
 
 	/**
 	* Retrieves Trademark information
 	* 
 	* @param String $serial serial number
-	* @return Array $data
+	* @return Array $data|Bool false
 	*/
 	public function	getTrademarkData($serial)
 	{
@@ -190,40 +183,47 @@ RESPONSEFORM;
 		{
 			$this->_makeStatusDir();
 		}
-		else
-		{
-			// @TODO grab directory name from a database
-			continue;
-		}
 
 		// Clean serial number input
 		$serial = $this->_cleanInput($serial);
 
 		// @TODO create logic for users who want to retireve
 		// their trademark via registration number
-
-		$this->_getTrademark_serial($serial, $this->_dir);
+		
+		// Check if exception was thrown
+		if(!$this->_getTrademark_serial($serial, $this->_dir))
+		{
+			return False;
+		}
+		
 		$this->_mapImportantData($this->_trademark);
 		return $this->_data;
 	}
 
 	/**
 	* Removes all files in archive directory
+	* This method should be called at EOD or 12 AM
+	* 
+	* This method should be called from crontab
 	*
 	* @param String $dir name of directory
-	* @deprecated If memcache is implemented, data will be stored in memory rather than a directory
 	*/
 	public function flushArchive($dir = 'status_archive')
 	{
-		// @TODO if directory name exists in database retrive it and insert in $dir
-
 		// Recursively remove all files if subdirectories exist
 		$path = getcwd() . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR;
 		foreach (glob("{$path}*") as $file) 
 		{
 			if(is_dir($file)) 
-			{ 
-            	flushArchive($file);
+			{
+				if(is_dir_empty($file))
+				{
+					rmdir($file);
+				}
+				else 
+				{
+					flushArchive($file);	
+				}
         	} 
         	else 
         	{
@@ -236,24 +236,41 @@ RESPONSEFORM;
 
 	/**
 	* Generates trademark Object via Serial number
+	* If an xml file already exists with the corresponding serial number,
+	* it will parse it from disk rather than obtain it from TSDR system
 	* 
 	* @param String $serial serial number
 	* @param String $dir directory name to store xml
+	* @return Bool False if exception caught
 	*/
 	private function _getTrademark_serial($serial, $dir)
 	{
-		$url = "https://tsdrsec.uspto.gov/ts/cd/casedocs/sn{$serial}/zip-bundle-download?case=true&docs=&assignments=&prosecutionHistory=";
-
-		$upload = new urluploader($url, $dir, $serial);
-		       if($upload->uploadFromUrl())
-		       {$upload->unzip();}
-		       else {echo "We could not upload the file";} 
+		// Check if status file exists
+		if(!file_exists($dir. DIRECTORY_SEPARATOR ."{$serial}_status_st96.xml"))
+		{
+			$url = "https://tsdrsec.uspto.gov/ts/cd/casedocs/sn{$serial}/zip-bundle-download?case=true&docs=&assignments=&prosecutionHistory=";
+	
+			try 
+			{
+				$upload = new urluploader($url, $dir, $serial);
+				$upload->uploadFromUrl();     	
+			}
+			catch (Exception $e)
+			{
+				// Development
+				//echo "ERROR: ". $e->getMessage();
+				// Production 
+				echo "<div class=\"error\">Sorry, but the provided serial number was not found </br> Please make sure you inserted the correct serial number</div>";
+				return false;
+			}
+		}
 		
 		$xml = simplexml_load_file($dir. DIRECTORY_SEPARATOR . "{$serial}_status_st96.xml", NULL, NULL, 'ns2', True);
 
 		$trademark = $xml->TrademarkTransactionBody->TransactionContentBag->TransactionData->TrademarkBag->Trademark;
 
 		$this->_trademark = $trademark;
+		return true;
 	}
 
 	/**
