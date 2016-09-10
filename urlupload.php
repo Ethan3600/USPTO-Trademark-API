@@ -13,15 +13,12 @@ class urluploader {
   private $unzipdir; //This is the directory where we will unzip our file
                  
                  
-  function __construct($fileurl,$dir=0, $serial)
+  function __construct($fileurl,$dir, $serial)
   {
 
     if (!is_string($dir))
     { 
-      //the user has not provided any directory so we will use the current one
       $this->unzipdir = getcwd() . DIRECTORY_SEPARATOR;
-       
-      //this is where our file wiil be uploaded and unzipped
     }
     else 
     {
@@ -83,7 +80,7 @@ class urluploader {
   { 
   /*
   * Lets check if the user has provided a filename.
-  * This is usefull if they just want to unzip a n existing file
+  * This is usefull if they just want to unzip an existing file
   */
         
     if (!$filename)
@@ -91,20 +88,20 @@ class urluploader {
       $filename = $this->filename;
     } 
     
-    //Set directory where the file will be unzipped
+    // Set directory where the file will be unzipped
     if(!$newdir)
     //if the user has not provided a directory name use the one created
     {
       $newdir = $this->unzipdir;
     }
               
-    //Check to see if the zip file exists
+    // Check to see if the zip file exists
     if (!file_exists($filename))
     {
       throw new Exception('The zip file does not exist');
     }
     
-    //Lets check if the default zip class exists
+    // Lets check if the default zip class exists
            
     if(class_exists('ZipArchive'))
     {
@@ -125,10 +122,10 @@ class urluploader {
     }
     else
     {
-      // the zip class is missing. try unix shell command
+      // The zip class is missing. try unix shell command
       @shell_exec('unzip -d $newdir '. $this->filename);
     }
-      //If delete has been set to true then we delete the existing zip file  
+    //If delete has been set to true then we delete the existing zip file  
     if ($delete) 
     {
       unlink($filename);
