@@ -1,6 +1,5 @@
 <?php 
-include 'UrlUpload.php';
-include 'TsdrApi.php';
+include_once 'TsdrApi.php';
 
 /*=================== EXECUTION/HANDLER CODE ======================*/
 
