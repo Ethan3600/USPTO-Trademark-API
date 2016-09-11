@@ -1,6 +1,6 @@
 <?php 
-require_once __DIR__.DIRECTORY_SEPARATOR.'UrlUpload.php';
-require_once __DIR__.DIRECTORY_SEPARATOR.'TsdrApi.php';
+require_once 'UrlUpload.php';
+require_once 'TsdrApi.php';
 
 /*=================== EXECUTION/HANDLER CODE ======================*/
 

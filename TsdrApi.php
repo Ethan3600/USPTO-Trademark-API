@@ -41,7 +41,7 @@ class TsdrApi
 	*/
 	public static function getApiForm()
 	{
-		$reloadGif = __DIR__.DIRECTORY_SEPARATOR.'reload.gif';
+		$reloadGif = 'reload.gif';
 		$phpself = "Response.php";
 		$form = <<<APIFORM
 <h1>Trademark API test environment</h1>
