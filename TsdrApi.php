@@ -1,5 +1,4 @@
 <?php
-include_once 'UrlUpload.php';
 /**
 * This API will allow users to create an AJAX form
 * that takes a serial number of a trademark and 
@@ -7,6 +6,9 @@ include_once 'UrlUpload.php';
 * 
 * @version 0.3 Beta
 */
+
+include_once 'UrlUpload.php';
+
 class TsdrApi
 {
 	const NO_INFO_FOUND = "No Information found.";
