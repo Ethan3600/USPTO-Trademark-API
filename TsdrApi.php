@@ -7,7 +7,7 @@
 * @version 0.3 Beta
 */
 
-include_once 'UrlUpload.php';
+include_once 'urlupload.php';
 
 class TsdrApi
 {
