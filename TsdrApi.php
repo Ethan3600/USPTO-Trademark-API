@@ -58,7 +58,7 @@ class TsdrApi
   <br><br>
   <input type="button" name="submit" value="Submit" onclick="javascript:submitSerial(event)"> <!-- AJAX CALL -->
   <div id='loadingmessage' style='display:none'>
-  	<img src=$reloadGif/>
+  	<img src=$reloadGif>
   </div>  
 </form>
 
