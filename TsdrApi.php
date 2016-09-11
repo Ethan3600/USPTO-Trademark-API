@@ -41,6 +41,7 @@ class TsdrApi
 	*/
 	public static function getApiForm()
 	{
+		$reloadGif = __DIR__.DIRECTORY_SEPARATOR.'reload.gif';
 		$phpself = "Response.php";
 		$form = <<<APIFORM
 <h1>Trademark API test environment</h1>
@@ -57,7 +58,7 @@ class TsdrApi
   <br><br>
   <input type="button" name="submit" value="Submit" onclick="javascript:submitSerial(event)"> <!-- AJAX CALL -->
   <div id='loadingmessage' style='display:none'>
-  	<img src='reload.gif'/>
+  	<img src=$reloadGif/>
   </div>  
 </form>
 
