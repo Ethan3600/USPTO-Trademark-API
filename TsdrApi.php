@@ -236,7 +236,7 @@ RESPONSEFORM;
 			try 
 			{
 				// @TODO decouple urluploader class and use dependency injection principles
-				$upload = new urluploader($url, $this->_dir, $serial);
+				$upload = new UrlUploader($url, $this->_dir, $serial);
 				$upload->uploadFromUrl();     	
 			}
 			catch (Exception $e)

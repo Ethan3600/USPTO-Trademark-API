@@ -6,7 +6,7 @@
  * @param String $url
  * @param String $unzipdir
  */
-class urluploader {
+class UrlUploader {
 
   private $filename; //file name of the zip file
   private $url; //The url where the file is hosted
