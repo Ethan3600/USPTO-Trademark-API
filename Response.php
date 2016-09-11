@@ -1,6 +1,6 @@
 <?php 
-include_once '.'.DIRECTORY_SEPARATOR.'UrlUpload.php';
-include_once '.'.DIRECTORY_SEPARATOR.'TsdrApi.php';
+include 'UrlUpload.php';
+include 'TsdrApi.php';
 
 /*=================== EXECUTION/HANDLER CODE ======================*/
 

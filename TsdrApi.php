@@ -241,13 +241,13 @@ RESPONSEFORM;
 			catch (Exception $e)
 			{
 				// Development
-				echo "ERROR: ". $e->getMessage()."</br>";
-				echo "<pre>";
-				echo print_r($e->getFile())."\n";
-				echo "Line: ".$e->getLine();
-				echo "</pre>";
+				// echo "ERROR: ". $e->getMessage()."</br>";
+				// echo "<pre>";
+				// echo print_r($e->getFile())."\n";
+				// echo "Line: ".$e->getLine();
+				// echo "</pre>";
 				// Production 
-				// echo "<div class=\"error\">Sorry, but the provided serial number was not found </br> Please make sure you inserted the correct serial number</div>";
+				echo "<div class=\"error\">Sorry, but the provided serial number was not found </br> Please make sure you inserted the correct serial number</div>";
 				return false;
 			}
 		}
