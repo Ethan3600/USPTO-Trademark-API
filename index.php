@@ -1,5 +1,5 @@
 <?php 
-require_once 'TsdrApi.php';
+require_once '.'.DIRECTORY_SEPARATOR.'TsdrApi.php';
 
 TsdrApi::getApiForm();
 ?>
