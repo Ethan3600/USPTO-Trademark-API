@@ -1,5 +1,5 @@
 <?php
-include 'UrlUpload.php';
+include_once 'UrlUpload.php';
 /**
 * This API will allow users to create an AJAX form
 * that takes a serial number of a trademark and 
@@ -236,7 +236,7 @@ RESPONSEFORM;
 			try 
 			{
 				// @TODO decouple urluploader class and use dependency injection principles
-				$upload = new UrlUploader($url, $this->_dir, $serial);
+				$upload = new UrlUpload($url, $this->_dir, $serial);
 				$upload->uploadFromUrl();     	
 			}
 			catch (Exception $e)
