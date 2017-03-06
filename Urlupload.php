@@ -1,4 +1,7 @@
 <?php
+
+namespace local\Tsdrapi\lib;
+
 /**
  * Handles file upload from server
  * 
@@ -40,7 +43,7 @@ class UrlUpload {
     // validate the url
     if(!filter_var($this->url, FILTER_VALIDATE_URL))
     {
-    	throw new Exception("The provided url is invalid");
+    	throw new \Exception("The provided url is invalid");
     }
   
     $length=5120;
@@ -48,12 +51,12 @@ class UrlUpload {
 
     if(!($handle = fopen($this->url,'rb')))
     {
-    	throw new Exception("Url was not able to be opened");
+    	throw new \Exception("Url was not found");
     }
      
     if(!($write = fopen($this->filename,'w')))
     {
-    	throw new Exception("Could not open zip file");
+    	throw new \Exception("Could not open zip file");
     }
      
     while(!feof($handle))
@@ -98,24 +101,24 @@ class UrlUpload {
     // Check to see if the zip file exists
     if (!file_exists($filename))
     {
-      throw new Exception('The zip file does not exist');
+      throw new \Exception('The zip file does not exist');
     }
     
     // Lets check if the default zip class exists
            
     if(class_exists('ZipArchive'))
     {
-      $zip = new ZipArchive;
+      $zip = new \ZipArchive;
 
       if($zip->open($filename) !== TRUE)
       {
-        throw new Exception('Unable to open the zip file');
+        throw new \Exception('Unable to open the zip file');
       }
 
 
     if(!($zip->extractTo($newdir)))
     {
-    	throw new Exception("Unable to extract zip file");
+    	throw new \Exception("Unable to extract zip file");
     }
     
     $zip->close();

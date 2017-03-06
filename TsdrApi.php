@@ -7,7 +7,9 @@
 * @version 0.3 Beta
 */
 
-include_once 'urlupload.php';
+namespace local\Tsdrapi\lib;
+
+use local\Tsdrapi\lib\Urlupload;
 
 class TsdrApi
 {
@@ -192,7 +194,7 @@ RESPONSEFORM;
 	*
 	* @param String $dir name of directory
 	*/
-	public function flushArchive($dir = 'status_archive')
+	public function flushArchive($dir)
 	{
 		// Recursively remove all files if subdirectories exist
 		$path = getcwd() . DIRECTORY_SEPARATOR . $dir . DIRECTORY_SEPARATOR;
@@ -214,6 +216,18 @@ RESPONSEFORM;
             	unlink($file);
         	}
 		}
+	}
+	
+	/**
+	 * Set cache directory
+	 * 
+	 * @param String $path
+	 * @return Void
+	 */
+	public function setDir( String $path )
+	{
+		$this->_dir = $path;
+		return;
 	}
 
 	/*=================== UTILITIES ======================*/
@@ -238,7 +252,7 @@ RESPONSEFORM;
 			try 
 			{
 				// @TODO decouple urluploader class and use dependency injection principles
-				$upload = new UrlUpload($url, $this->_dir, $serial);
+				$upload = new Urlupload($url, $this->_dir, $serial);
 				$upload->uploadFromUrl();     	
 			}
 			catch (Exception $e)
@@ -316,12 +330,13 @@ RESPONSEFORM;
 	private function _makeStatusDir()
 	{
 		$dir = 'status_archive';
+		$path = $this->_dir . $dir;
 
-		if (!file_exists($dir) && !is_dir($dir)) 
+		if (!file_exists($path) && !is_dir($path)) 
 		{
-	    	mkdir($dir);         
+	    	mkdir($path);         
 		}
-		$this->_dir = $dir;
+		$this->_dir = $path;
 	}
 
 	/**
@@ -377,9 +392,7 @@ RESPONSEFORM;
 				return $status;
 			default:
 				return $status; // No modifications on status
-		}
-		
-		
+		}	
 		 	
 	}
 	
