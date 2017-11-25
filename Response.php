@@ -3,13 +3,16 @@ include_once 'TsdrApi.php';
 
 /*=================== EXECUTION/HANDLER CODE ======================*/
 
-if (isset($_POST['serial'])) {
+if (isset($_POST['number'])) {
 	$api = new TsdrApi();
-	$serial = $_POST["serial"];
-	$data = $api->getTrademarkData($serial);
+	$number = $_POST["number"];
+        $type = $_POST["type"];
+//print "number $number type $type<br>\n";
+
+	$data = $api->getTrademarkData($number, $type);
 	if($data)
 	{
-		$api->responseForm($data, $serial);
+		$api->responseForm($data, $number);
 	}
 }
 ?>

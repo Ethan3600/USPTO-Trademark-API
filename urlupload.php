@@ -11,9 +11,9 @@ class UrlUpload {
   private $filename; //file name of the zip file
   private $url; //The url where the file is hosted
   private $unzipdir; //This is the directory where we will unzip our file
+  private $localname;  // serial number portion of the zip file back from the uspto
                  
-                 
-  function __construct($fileurl,$dir, $serial)
+  function __construct($fileurl,$dir, $number)
   {
 
     if (!is_string($dir))
@@ -25,9 +25,14 @@ class UrlUpload {
       $this->unzipdir = $dir . DIRECTORY_SEPARATOR;
     }
                      
-    $this->filename = $this->unzipdir . "serialNum_{$serial}.zip";
+    $this->filename = $this->unzipdir . "number_{$number}.zip";
     $this->url = $fileurl;
     }
+
+  public function getLocalname()
+  {
+     return $this->localname;
+  }
 
   /**
   * Grabs zip file from server
@@ -50,6 +55,15 @@ class UrlUpload {
     {
     	throw new Exception("Url was not able to be opened");
     }
+
+    // we need to remember the attachment filename.  requests by rn comes with
+    // sn_status_st96.xml inside the zip.  
+    // @TODO: find a more elegant way to do this!
+    $headers = implode('!', $http_response_header);
+ 
+    if(preg_match("/filename=(\d+)\.zip/", $headers, $matches))
+       $this->localname = $matches[1];
+
      
     if(!($write = fopen($this->filename,'w')))
     {

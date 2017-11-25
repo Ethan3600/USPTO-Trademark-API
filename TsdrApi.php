@@ -1,7 +1,7 @@
 <?php
 /**
 * This API will allow users to create an AJAX form
-* that takes a serial number of a trademark and 
+* that takes a serial or registation number of a trademark and 
 * get important information about it
 * 
 * @version 0.3 Beta
@@ -50,16 +50,19 @@ class TsdrApi
 <h1>Trademark API test environment</h1>
 <p>Welcome to the Trademark API Test Environment!</p>
 <p>This form will dynamically retrieve relative information about any existing trademark on the fly!</p>
-<p>Please enter a serial number.</p>
-<i>If you don't have have one, use this for an example: 85129597</i>
+<p>Please enter a serial or registration number.</p>
+<i>If you don't have have one, use this for an example: serial no 85129597</i>
 <form method="post" action="$phpself">  
  <!-- Name: <input type="text" name="name">
   <br><br>
   E-mail: <input type="text" name="email">
   <br><br> -->
-  Serial Number: <input type="text" name="serial">
+Type: <input type="radio" name="type" value="sn" checked>Serial
+<input type="radio" name="type" value="rn">Registration
+<br>
+Number: <input type="text" name="number">
   <br><br>
-  <input type="button" name="submit" value="Submit" onclick="javascript:submitSerial(event)"> <!-- AJAX CALL -->
+  <input type="button" name="submit" value="Submit" onclick="javascript:submitNumber(event)"> <!-- AJAX CALL -->
   <div id='loadingmessage' style='display:none'>
   	<img src=$reloadGif>
   </div>  
@@ -72,18 +75,18 @@ class TsdrApi
 $("input").keypress(function(event) {
    if (event.which == 13) {
    	event.preventDefault();
-   	submitSerial();    
+   	submitNumber();    
    }       
 });
 
-function submitSerial()
+function submitNumber()
 {
 	$('#loadingmessage').show();
-	if($('input[name=serial]').val() == "")
+	if($('input[name=number]').val() == "")
 	{
 		$( ".response-form" ).remove();
 		$( ".error" ).remove();
-		$('#trademark').append('<div class="error">The field cannot be empty. </br> Please insert a valid serial number</div>');
+		$('#trademark').append('<div class="error">The field cannot be empty. </br> Please insert a valid serial or registration number</div>');
 		$('#loadingmessage').hide();
 	}
 	else
@@ -92,7 +95,7 @@ function submitSerial()
 		$.ajax({
 	    type: "POST",
 	    data: {
-	    	'serial': $('input[name=serial]').val()
+	    	'number': $('input[name=number]').val(),'type': $('input[name=type]:checked').val()
 	    },
 	    url: "$phpself",
 	    dataType: "html",
@@ -115,18 +118,38 @@ APIFORM;
 	 *
 	 * @TODO Do I need to handle errored responses from here?
 	 * @param Object $data
-	 * @param Int $serial
+	 * @param Int $number
 	 * @return HTML form
 	 */
-	public function responseForm($data, $serial)
+	public function responseForm($data, $number)
 	{
+		$sn = $data['SerialNumber'];  // parameter $number might be registration number - png is sn.png
+
+		//  see if an image was returned in the zip file
+ 		if(file_exists("status_archive/$sn.png"))
+		{
+			$image = <<<IMAGE
+<img src="status_archive/$sn.png" style="width: 170px;" alt="trademark image">
+IMAGE;
+		}
+		else
+		{
+			$image = "no image available";
+		} 
+
 		$respForm = <<<RESPONSEFORM
-		<div class="response-form" id="$serial">
+		<div class="response-form" id="$number">
 	<dl class="trademark-info">
 		<dt>Trademark</dt>
-			<dd><img src="status_archive/$serial.png" style="width: 170px;" alt="trademark image"></dd>
+			<dd>$image</dd>
+		<dt>Serial Number</dt>
+			<dd>{$data['SerialNumber']}</dd>
 		<dt>Application Filing Date</dt>
 			<dd>{$data['ApplicationFilingDate']}</dd>
+		<dt>Registration Number</dt>
+			<dd>{$data['RegistrationNumber']}{$data['RegistrationCertificate']}</dd>
+		<dt>Registration Date</dt>
+			<dd>{$data['RegistrationDate']}</dd>
 		<dt>Mark Type</dt>
 			<dd>{$data['MarkType']}</dd>
 		<dt>Status</dt>
@@ -160,22 +183,20 @@ RESPONSEFORM;
 	/**
 	* Retrieves Trademark information
 	* 
-	* @param String $serial serial number
+	* @param String $number serial or registration number
+        * @param String $type sn or rn for serial number or registration number
 	* @return Array $data|Bool false
 	*/
-	public function	getTrademarkData($serial)
+	public function	getTrademarkData($number, $type)
 	{
 		// Check if status archive exists
 		$this->_makeStatusDir();
 	
-		// Clean serial number input
-		$serial = $this->_cleanInput($serial);
-
-		// @TODO create logic for users who want to retireve
-		// their trademark via registration number
+		// Clean number input
+		$number = $this->_cleanInput($number);
 		
 		// Check if exception was thrown
-		if(!$this->_getTrademark_serial($serial, $this->_dir))
+		if(!$this->_getTrademark($number, $type))
 		{
 			return False;
 		}
@@ -219,27 +240,31 @@ RESPONSEFORM;
 	/*=================== UTILITIES ======================*/
 
 	/**
-	* Generates trademark Object via Serial number
+	* Generates trademark Object via Serial or Registration number
 	* If an xml file already exists with the corresponding serial number,
 	* it will parse it from disk rather than obtain it from TSDR system
 	* 
-	* @param String $serial serial number
+	* @param String $number serial or registration number
+        * @param String $type sn or rn for serial number or registration number
 	* @param String $dir directory name to store xml
 	* @return Bool False if exception caught
 	*/
-	private function _getTrademark_serial($serial)
+	private function _getTrademark($number, $type)
 	{
 		// Check if status file exists
-		if(!file_exists($this->_dir. DIRECTORY_SEPARATOR ."{$serial}_status_st96.xml"))
+		if($type === 'rn' || !file_exists($this->_dir. DIRECTORY_SEPARATOR ."{$number}_status_st96.xml"))
 		{
 			// @TODO Make abstraction for $url
-			$url = "https://tsdrsec.uspto.gov/ts/cd/casedocs/sn{$serial}/zip-bundle-download?case=true&docs=&assignments=&prosecutionHistory=";
+			$url = "https://tsdrsec.uspto.gov/ts/cd/casedocs/{$type}{$number}/zip-bundle-download?case=true&docs=&assignments=&prosecutionHistory=";
 	
 			try 
 			{
 				// @TODO decouple urluploader class and use dependency injection principles
-				$upload = new UrlUpload($url, $this->_dir, $serial);
-				$upload->uploadFromUrl();     	
+				$upload = new UrlUpload($url, $this->_dir, $number);
+				$upload->uploadFromUrl(); 
+ 
+                                // might have to change $number  registration number search returns searial.zip
+  	                        $number = $upload->getLocalname();
 			}
 			catch (Exception $e)
 			{
@@ -250,16 +275,19 @@ RESPONSEFORM;
 				// echo "Line: ".$e->getLine();
 				// echo "</pre>";
 				// Production 
-				echo "<div class=\"error\">Sorry, but the provided serial number was not found </br> Please make sure you inserted the correct serial number</div>";
+
+				$label = ($type == "sn" ? "serial" : "registration");
+				echo "<div class=\"error\">Sorry, but the provided $label number was not found </br> Please make sure you inserted the correct serial or registration number</div>";
 				return false;
 			}
 		}
 		
-		$xml = simplexml_load_file($this->_dir. DIRECTORY_SEPARATOR . "{$serial}_status_st96.xml", NULL, NULL, 'ns2', True);
+		$xml = simplexml_load_file($this->_dir. DIRECTORY_SEPARATOR . "{$number}_status_st96.xml", NULL, NULL, 'ns2', True);
 
 		$trademark = $xml->TrademarkTransactionBody->TransactionContentBag->TransactionData->TrademarkBag->Trademark;
 
 		$this->_trademark = $trademark;
+
 		return true;
 	}
 
@@ -273,9 +301,21 @@ RESPONSEFORM;
 	{
 		$counter = 0;
 		$data = array();
+
 		$data['ApplicationFilingDate'] 	= $trademark->ApplicationDate
 											? $trademark->ApplicationDate: self::NO_INFO_FOUND;
-											
+		$ns1 = $trademark->children('ns1', true);
+
+		$data['SerialNumber'] = $ns1->ApplicationNumber->ApplicationNumberText ? $ns1->ApplicationNumber->ApplicationNumberText: self::NO_INFO_FOUND;
+
+		$data['RegistrationDate'] 	= $ns1->RegistrationDate
+											? $ns1->RegistrationDate: self::NO_INFO_FOUND;
+		$data['RegistrationNumber'] 	= $ns1->RegistrationNumber
+											? $ns1->RegistrationNumber: self::NO_INFO_FOUND;								
+
+		$data['RegistrationCertificate']	= $ns1->RegistrationNumber
+											? ' <a target="_blank" href="https://tsdrsec.uspto.gov/ts/cd/casedocs/bundle.pdf?rn=' . $ns1->RegistrationNumber . '&amp;category=RC">Registration Certificate</a>': '';
+
 		$data['MarkType'] 				= $trademark->MarkCategory
 											? $trademark->MarkCategory: self::NO_INFO_FOUND;
 											
@@ -334,6 +374,7 @@ RESPONSEFORM;
 	  $userInput = trim($userInput);
 	  $userInput = stripslashes($userInput);
 	  $userInput = htmlspecialchars($userInput);
+	  $userInput = str_replace(",", "", $userInput);
 	  return $userInput;
 	}
 	
