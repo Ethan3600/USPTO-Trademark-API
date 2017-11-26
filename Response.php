@@ -7,7 +7,6 @@ if (isset($_POST['number'])) {
 	$api = new TsdrApi();
 	$number = $_POST["number"];
         $type = $_POST["type"];
-//print "number $number type $type<br>\n";
 
 	$data = $api->getTrademarkData($number, $type);
 	if($data)
