@@ -16,6 +16,10 @@ class TsdrApi
 	const STATUS_ABANDONED = "Abandoned";
 	
 	const STATUS_CANCELLED = "Registration cancelled";
+
+	const REGISTRATION_NUMBER = "rn";
+
+	const SERIAL_NUMBER = "sn";
 	
 	/**
 	* This variable stores all the "important" data of the mark
@@ -44,6 +48,7 @@ class TsdrApi
 	*/
 	public static function getApiForm()
 	{
+		$constant = 'constant';
 		$reloadGif = 'reload.gif';
 		$phpself = "Response.php";
 		$form = <<<APIFORM
@@ -57,8 +62,8 @@ class TsdrApi
   <br><br>
   E-mail: <input type="text" name="email">
   <br><br> -->
-Type: <input type="radio" name="type" value="sn" checked>Serial
-<input type="radio" name="type" value="rn">Registration
+Type: <input type="radio" name="type" value="{$constant('self::SERIAL_NUMBER')}" checked>Serial
+<input type="radio" name="type" value="{$constant('self::REGISTRATION_NUMBER')}">Registration
 <br>
 Number: <input type="text" name="number">
   <br><br>
@@ -252,7 +257,7 @@ RESPONSEFORM;
 	private function _getTrademark($number, $type)
 	{
 		// Check if status file exists
-		if($type === 'rn' || !file_exists($this->_dir. DIRECTORY_SEPARATOR ."{$number}_status_st96.xml"))
+		if($type === self::REGISTRATION_NUMBER || !file_exists($this->_dir. DIRECTORY_SEPARATOR ."{$number}_status_st96.xml"))
 		{
 			// @TODO Make abstraction for $url
 			$url = "https://tsdrsec.uspto.gov/ts/cd/casedocs/{$type}{$number}/zip-bundle-download?case=true&docs=&assignments=&prosecutionHistory=";
@@ -276,7 +281,7 @@ RESPONSEFORM;
 				// echo "</pre>";
 				// Production 
 
-				$label = ($type == "sn" ? "serial" : "registration");
+				$label = ($type == self::SERIAL_NUMBER ? "serial" : "registration");
 				echo "<div class=\"error\">Sorry, but the provided $label number was not found </br> Please make sure you inserted the correct serial or registration number</div>";
 				return false;
 			}
