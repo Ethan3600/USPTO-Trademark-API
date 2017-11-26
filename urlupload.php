@@ -13,7 +13,7 @@ class UrlUpload {
   private $unzipdir; //This is the directory where we will unzip our file
   private $localname;  // serial number portion of the zip file back from the uspto
                  
-  function __construct($fileurl,$dir, $number)
+  function __construct($fileurl, $dir, $number)
   {
 
     if (!is_string($dir))
