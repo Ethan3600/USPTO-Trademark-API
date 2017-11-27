@@ -62,9 +62,12 @@ class TsdrApi
   <br><br>
   E-mail: <input type="text" name="email">
   <br><br> -->
-Type: <input type="radio" name="type" value="{$constant('self::SERIAL_NUMBER')}" checked>Serial
-<input type="radio" name="type" value="{$constant('self::REGISTRATION_NUMBER')}">Registration
-<br>
+APIFORM;
+
+		$form .= 'Type: <input type="radio" name="type" value="' . self::SERIAL_NUMBER . '" checked>Serial ';
+		$form .= '<input type="radio" name="type" value="' . self::REGISTRATION_NUMBER . '">Registration<br>';
+
+		$form .= <<<APIFORM
 Number: <input type="text" name="number">
   <br><br>
   <input type="button" name="submit" value="Submit" onclick="javascript:submitNumber(event)"> <!-- AJAX CALL -->
